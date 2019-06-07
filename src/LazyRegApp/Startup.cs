@@ -13,6 +13,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LazyRegApp
 {
+    public class MyMetaData
+    {
+        public string Category { get; set; }
+        public string Version { get; set; }
+    }
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -41,6 +46,33 @@ namespace LazyRegApp
             services.AddLazyTransient<ISomeLazyTransient, SomeLazyTransientZero>();
             services.AddLazyTransient<ISomeLazyTransient, SomeLazyTransientOne>();
             services.AddLazyTransient<ISomeLazyTransient, SomeLazyTransientTwo>();
+
+
+            var expensivePluginList = new List<string>
+            {
+                "one","two","three"
+            };
+            foreach (var item in expensivePluginList)
+            {
+                var metaData = new MyMetaData
+                {
+                    Category = item,
+                    Version = "1.0.0"
+                };
+                services.AddLazyTransient<IExpensiveService>((sp) =>
+                {
+                    return new SomeExpensiveService(sp, $"{item}");
+                });
+
+                services.AddLazyTransient<IExpensiveService, MyMetaData>((sp) =>
+                {
+                    return new SomeExpensiveService(sp, $"{item}_withMetaData");
+                }, metaData);
+
+
+
+            }
+
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
